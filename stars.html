@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Constellation Connector</title>
+    <meta name="description" content="Connect the stars to reveal their secrets" />
+    <meta name="author" content="Lovable" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary: #9b87f5;
+        --primary-foreground: #ffffff;
+        --secondary: #1A1F2C;
+        --secondary-foreground: #ffffff;
+        --muted: #6E59A5;
+        --muted-foreground: #D6BCFA;
+        --background: #0a0a16;
+        --foreground: #ffffff;
+        --border: #2A253D;
+      }
+      
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        background-color: var(--background);
+        color: var(--foreground);
+        font-family: 'Space Grotesk', sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      
+      .container {
+        max-width: 1024px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        position: relative;
+        z-index: 10;
+      }
+      
+      h1 {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+        color: var(--primary);
+        animation: pulse 3s infinite alternate;
+      }
+      
+      @keyframes pulse {
+        0% { text-shadow: 0 0 5px rgba(155, 135, 245, 0.3); }
+        100% { text-shadow: 0 0 15px rgba(155, 135, 245, 0.7), 0 0 20px rgba(155, 135, 245, 0.5); }
+      }
+      
+      @keyframes glow {
+        0% { box-shadow: 0 0 5px rgba(155, 135, 245, 0.3); }
+        100% { box-shadow: 0 0 15px rgba(155, 135, 245, 0.7), 0 0 20px rgba(155, 135, 245, 0.5); }
+      }
+      
+      .level-indicators {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .level-indicator {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: var(--secondary);
+        border: 2px solid var(--border);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      
+      .level-indicator:hover {
+        transform: scale(1.1);
+      }
+      
+      .level-indicator.active {
+        background-color: var(--primary);
+        border-color: var(--primary-foreground);
+      }
+      
+      .level-indicator.completed:after {
+        content: '✓';
+        color: var(--primary-foreground);
+      }
+      
+      .level-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+      
+      .level-header h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      
+      .level-header .instruction {
+        color: var(--muted-foreground);
+        margin-bottom: 0.5rem;
+      }
+      
+      .level-header .description {
+        margin-bottom: 1rem;
+      }
+      
+      .clues {
+        background-color: rgba(26, 31, 44, 0.5);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border);
+      }
+      
+      .clue {
+        margin-bottom: 0.5rem;
+      }
+      
+      .game-field {
+        position: relative;
+        width: 800px;
+        height: 600px;
+        margin: 0 auto 1.5rem;
+        border: 2px solid var(--border);
+        border-radius: 0.5rem;
+        overflow: hidden;
+        background-color: rgba(26, 31, 44, 0.2);
+      }
+      
+      .star {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background-color: white;
+        border-radius: 50%;
+        box-shadow: 0 0 3px white;
+        z-index: 1;
+      }
+      
+      .star-dot {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        z-index: 10;
+        color: black;
+        font-weight: bold;
+        font-size: 12px;
+      }
+      
+      .star-dot:hover {
+        transform: scale(1.2) !important;
+      }
+      
+      .buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-primary {
+        background-color: var(--primary);
+        color: var(--primary-foreground);
+      }
+      
+      .btn-primary:hover {
+        background-color: #8b76e5;
+      }
+      
+      .btn-outline {
+        background-color: transparent;
+        color: var(--primary);
+        border: 1px solid var(--primary);
+      }
+      
+      .btn-outline:hover {
+        background-color: rgba(155, 135, 245, 0.1);
+      }
+      
+      .btn-success {
+        background-color: #4aff91;
+        color: #1A1F2C;
+      }
+      
+      .btn-success:hover {
+        background-color: #3edf7d;
+      }
+      
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      .success-message {
+        text-align: center;
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(75, 0, 130, 0.5), rgba(75, 0, 255, 0.3), rgba(75, 0, 130, 0.5));
+        border-radius: 0.5rem;
+        border: 1px solid var(--primary);
+      }
+      
+      .success-message h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        animation: pulse 1.5s infinite alternate;
+      }
+      
+      .password-display {
+        background-color: rgba(26, 31, 44, 0.8);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--primary);
+        max-width: 400px;
+        margin: 0 auto;
+      }
+      
+      .password-display p:first-child {
+        margin-bottom: 0.5rem;
+      }
+      
+      .password-display .final-password {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        animation: pulse 2s infinite alternate;
+      }
+      
+      .hidden {
+        display: none;
+      }
+      
+      .toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background-color: var(--secondary);
+        border: 1px solid var(--border);
+        color: var(--foreground);
+        z-index: 100;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: translateY(1rem);
+      }
+      
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      
+      .toast.success {
+        border-color: #4aff91;
+      }
+      
+      .toast.error {
+        border-color: #ff4a4a;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Constellation Connector</h1>
+      
+      <div class="level-indicators" id="level-indicators"></div>
+      
+      <div class="level-header">
+        <h2 id="level-title"></h2>
+        <p class="instruction" id="level-instruction"></p>
+        <p class="description" id="level-description"></p>
+      </div>
+      
+      <div class="clues" id="clues-container">
+        <!-- Clues will be dynamically populated -->
+      </div>
+      
+      <div class="game-field" id="game-field">
+        <canvas id="canvas" width="800" height="600"></canvas>
+        <!-- Stars will be dynamically populated -->
+      </div>
+      
+      <div class="buttons">
+        <button class="btn btn-outline" id="reset-btn">Reset Stars</button>
+        <button class="btn btn-primary" id="check-btn">Check Solution</button>
+        <button class="btn btn-success hidden" id="next-btn">Next Level</button>
+      </div>
+      
+      <div class="success-message hidden" id="success-message">
+        <h2>🎉 Congratulations! You've unlocked all constellations!</h2>
+        <div class="password-display">
+          <p>The hidden password is:</p>
+          <p class="final-password" id="final-password">All_The_Stars</p>
+        </div>
+      </div>
+      
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+      // Game data structure
+      const levels = [
+        {
+          id: 1,
+          name: "Decode the Stars",
+          instruction: "Connect the numbered stars in the correct sequence to solve the puzzle.",
+          description: "Solve the clues to determine which stars to connect and in what order.",
+          primaryColor: "#ffcc00",
+          stars: [
+            { id: "star-6", x: 130, y: 100, size: 20, value: 6, isPartOfConstellation: true },
+            { id: "star-13", x: 200, y: 450, size: 20, value: 13, isPartOfConstellation: true },
+            { id: "star-25", x: 300, y: 170, size: 20, value: 25, isPartOfConstellation: true },
+            { id: "star-7", x: 500, y: 350, size: 20, value: 7, isPartOfConstellation: true },
+            { id: "star-29", x: 400, y: 380, size: 20, value: 29, isPartOfConstellation: true },
+            { id: "star-20", x: 250, y: 100, size: 20, value: 20, isPartOfConstellation: true },
+            { id: "star-42", x: 450, y: 100, size: 20, value: 42, isPartOfConstellation: true },
+            { id: "star-56", x: 700, y: 280, size: 20, value: 56, isPartOfConstellation: true },
+            { id: "star-19", x: 200, y: 170, size: 20, value: 19, isPartOfConstellation: true },
+            { id: "star-9", x: 200, y: 300, size: 20, value: 9, isPartOfConstellation: true },
+            { id: "star-17", x: 450, y: 500, size: 20, value: 17, isPartOfConstellation: true },
+            { id: "star-33", x: 530, y: 300, size: 20, value: 33, isPartOfConstellation: true },
+            { id: "star-30", x: 300, y: 500, size: 20, value: 30, isPartOfConstellation: true },
+            { id: "star-11", x: 620, y: 400, size: 20, value: 11, isPartOfConstellation: true },
+            { id: "star-90", x: 600, y: 100, size: 20, value: 90, isPartOfConstellation: true },
+            { id: "star-15", x: 130, y: 300, size: 20, value: 15, isPartOfConstellation: true },
+          ],
+          // 6 (sqrt 36) -> 9 (4²-7) -> 7 (2+0+2+3) -> 29 (Feb leap days) -> 30 (2*3*5) -> 90 (right angle) -> 42 (hex 2A) -> 17 (binary 10001)
+          solution: ["star-6", "star-9", "star-7", "star-29", "star-30", "star-90", "star-42", "star-17"],
+          clues: [
+            "1. Start with the star that equals the square root of 36.",
+            "2. Connect to the star that is the result of 4² - 7.",
+            "3. Connect to the star that is the sum of all digits in 2023.",
+            "4. Connect to the star that represents the number of days in February in a leap year.",
+            "5. Connect to the star that is the product of the first three prime numbers.",
+            "6. Connect to the star that is the number of degrees in a right angle.",
+            "7. Connect to the star that is the decimal value of hexadecimal 2A.",
+            "8. Finish with the star that represents the binary number 10001 in decimal."
+          ]
+        },
+        {
+          id: 2,
+          name: "Orion Constellation",
+          instruction: "1. Google Orion represents which color",
+          description: "2. small - big",
+          primaryColor: "#4dabf7", // Blue
+          stars: [
+            { id: "orion-1", x: 400, y: 100, size: 15, isPartOfConstellation: true },
+            { id: "orion-2", x: 600, y: 120, size: 8, isPartOfConstellation: false },
+            { id: "orion-3", x: 220, y: 150, size: 8, isPartOfConstellation: false },
+            { id: "orion-4", x: 200, y: 200, size: 17.5, isPartOfConstellation: true },
+            { id: "orion-5", x: 300, y: 240, size: 20, isPartOfConstellation: true },
+            { id: "orion-6", x: 400, y: 250, size: 22.5, isPartOfConstellation: true },
+            { id: "orion-7", x: 500, y: 240, size: 25, isPartOfConstellation: true },
+            { id: "orion-8", x: 350, y: 350, size: 27.5, isPartOfConstellation: true },
+            { id: "orion-9", x: 350, y: 400, size: 30, isPartOfConstellation: true },
+            { id: "orion-10", x: 600, y: 400, size: 32.5, isPartOfConstellation: true },
+            { id: "orion-11", x: 200, y: 450, size: 35, isPartOfConstellation: true },
+            { id: "orion-12", x: 150, y: 300, size: 8, isPartOfConstellation: false },
+            { id: "orion-13", x: 650, y: 200, size: 8, isPartOfConstellation: false },
+            { id: "orion-14", x: 500, y: 500, size: 8, isPartOfConstellation: false },
+            { id: "orion-15", x: 250, y: 350, size: 8, isPartOfConstellation: false },
+            { id: "orion-16", x: 180, y: 350, size: 10, isPartOfConstellation: false },
+            { id: "orion-17", x: 420, y: 180, size: 10, isPartOfConstellation: false },
+            { id: "orion-18", x: 550, y: 320, size: 10, isPartOfConstellation: false },
+            { id: "orion-19", x: 270, y: 420, size: 10, isPartOfConstellation: false },
+            { id: "orion-20", x: 480, y: 420, size: 10, isPartOfConstellation: false },
+          ],
+          solution: ["orion-1", "orion-4", "orion-5", "orion-6", "orion-7", "orion-8", "orion-9", "orion-10", "orion-11"]
+        },
+        {
+          id: 3,
+          name: "Aries Constellation",
+          instruction: "1. Google Aries represents which color",
+          description: "2. opposite of level 2",
+          primaryColor: "#ff6b6b", // Red
+          stars: [
+            { id: "aries-1", x: 300, y: 150, size: 35, isPartOfConstellation: true },
+            { id: "aries-2", x: 400, y: 200, size: 30, isPartOfConstellation: true },
+            { id: "aries-3", x: 500, y: 250, size: 25, isPartOfConstellation: true },
+            { id: "aries-4", x: 600, y: 300, size: 20, isPartOfConstellation: true },
+            { id: "aries-5", x: 650, y: 350, size: 15, isPartOfConstellation: true },
+            { id: "aries-6", x: 200, y: 300, size: 8, isPartOfConstellation: false },
+            { id: "aries-7", x: 350, y: 400, size: 8, isPartOfConstellation: false },
+            { id: "aries-8", x: 450, y: 130, size: 8, isPartOfConstellation: false },
+            { id: "aries-9", x: 250, y: 250, size: 8, isPartOfConstellation: false },
+            { id: "aries-10", x: 550, y: 400, size: 8, isPartOfConstellation: false },
+            { id: "aries-11", x: 180, y: 220, size: 10, isPartOfConstellation: false },
+            { id: "aries-12", x: 420, y: 300, size: 10, isPartOfConstellation: false },
+            { id: "aries-13", x: 520, y: 180, size: 10, isPartOfConstellation: false },
+            { id: "aries-14", x: 320, y: 320, size: 10, isPartOfConstellation: false },
+            { id: "aries-15", x: 480, y: 400, size: 10, isPartOfConstellation: false },
+          ],
+          solution: ["aries-1", "aries-2", "aries-3", "aries-4", "aries-5"]
+        },
+        {
+          id: 4,
+          name: "Capricorn Constellation",
+          instruction: "1. Google Capricorn represents which color",
+          description: "2. Even numbers in the order of level 2",
+          primaryColor: "#8B4513", // Brown
+          stars: [
+            { id: "capricorn-1", x: 300, y: 150, size: 20, value: 3, isPartOfConstellation: false },
+            { id: "capricorn-2", x: 400, y: 200, size: 20, value: 2, isPartOfConstellation: true },
+            { id: "capricorn-3", x: 500, y: 250, size: 20, value: 7, isPartOfConstellation: false },
+            { id: "capricorn-4", x: 600, y: 300, size: 20, value: 8, isPartOfConstellation: true },
+            { id: "capricorn-5", x: 650, y: 350, size: 20, value: 5, isPartOfConstellation: false },
+            { id: "capricorn-6", x: 200, y: 300, size: 20, value: 4, isPartOfConstellation: true },
+            { id: "capricorn-7", x: 350, y: 400, size: 20, value: 1, isPartOfConstellation: false },
+            { id: "capricorn-8", x: 450, y: 130, size: 20, value: 10, isPartOfConstellation: true },
+            { id: "capricorn-9", x: 250, y: 250, size: 20, value: 9, isPartOfConstellation: false },
+            { id: "capricorn-10", x: 550, y: 400, size: 20, value: 6, isPartOfConstellation: true },
+            { id: "capricorn-11", x: 220, y: 200, size: 20, value: 11, isPartOfConstellation: false },
+            { id: "capricorn-12", x: 380, y: 320, size: 20, value: 12, isPartOfConstellation: false },
+            { id: "capricorn-13", x: 480, y: 180, size: 20, value: 13, isPartOfConstellation: false },
+            { id: "capricorn-14", x: 330, y: 250, size: 20, value: 14, isPartOfConstellation: false },
+            { id: "capricorn-15", x: 520, y: 350, size: 20, value: 15, isPartOfConstellation: false },
+          ],
+          solution: ["capricorn-2", "capricorn-6", "capricorn-10", "capricorn-4", "capricorn-8"]
+        },
+        {
+          id: 5,
+          name: "Leo Constellation",
+          instruction: "1. Google Leo represents which color",
+          description: "2. Odd numbers in the order of level 3",
+          primaryColor: "#FFD700", // Gold
+          stars: [
+            { id: "leo-1", x: 300, y: 150, size: 20, value: 11, isPartOfConstellation: true },
+            { id: "leo-2", x: 400, y: 200, size: 20, value: 6, isPartOfConstellation: false },
+            { id: "leo-3", x: 500, y: 250, size: 20, value: 7, isPartOfConstellation: true },
+            { id: "leo-4", x: 600, y: 300, size: 20, value: 2, isPartOfConstellation: false },
+            { id: "leo-5", x: 650, y: 350, size: 20, value: 9, isPartOfConstellation: true },
+            { id: "leo-6", x: 200, y: 300, size: 20, value: 4, isPartOfConstellation: false },
+            { id: "leo-7", x: 350, y: 400, size: 20, value: 1, isPartOfConstellation: true },
+            { id: "leo-8", x: 450, y: 130, size: 20, value: 8, isPartOfConstellation: false },
+            { id: "leo-9", x: 250, y: 250, size: 20, value: 3, isPartOfConstellation: true },
+            { id: "leo-10", x: 550, y: 400, size: 20, value: 5, isPartOfConstellation: true },
+            { id: "leo-11", x: 200, y: 180, size: 20, value: 12, isPartOfConstellation: false },
+            { id: "leo-12", x: 370, y: 280, size: 20, value: 10, isPartOfConstellation: false },
+            { id: "leo-13", x: 470, y: 350, size: 20, value: 14, isPartOfConstellation: false },
+            { id: "leo-14", x: 550, y: 180, size: 20, value: 16, isPartOfConstellation: false },
+            { id: "leo-15", x: 280, y: 350, size: 20, value: 18, isPartOfConstellation: false },
+          ],
+          // Updated solution to follow odd numbers in descending order: 11 -> 9 -> 7 -> 5 -> 3 -> 1
+          solution: ["leo-1", "leo-5", "leo-3", "leo-10", "leo-9", "leo-7"]
+        }
+      ];
+
+      // Game state
+      const gameState = {
+        currentLevel: 1,
+        completedLevels: [],
+        selectedStars: [],
+        levelCompleted: false
+      };
+
+      // DOM elements
+      const levelTitle = document.getElementById("level-title");
+      const levelInstruction = document.getElementById("level-instruction");
+      const levelDescription = document.getElementById("level-description");
+      const cluesContainer = document.getElementById("clues-container");
+      const gameField = document.getElementById("game-field");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const resetBtn = document.getElementById("reset-btn");
+      const checkBtn = document.getElementById("check-btn");
+      const nextBtn = document.getElementById("next-btn");
+      const successMessage = document.getElementById("success-message");
+      const finalPassword = document.getElementById("final-password");
+      const levelIndicators = document.getElementById("level-indicators");
+      const toast = document.getElementById("toast");
+
+      // Initialize the game
+      function initGame() {
+        createLevelIndicators();
+        loadLevel(gameState.currentLevel);
+        setupEventListeners();
+      }
+
+      // Create level indicators
+      function createLevelIndicators() {
+        levelIndicators.innerHTML = "";
+        levels.forEach((level) => {
+          const indicator = document.createElement("div");
+          indicator.className = "level-indicator";
+          indicator.textContent = level.id;
+          indicator.dataset.level = level.id;
+          
+          if (level.id === gameState.currentLevel) {
+            indicator.classList.add("active");
+          }
+          
+          if (gameState.completedLevels.includes(level.id)) {
+            indicator.classList.add("completed");
+          }
+          
+          indicator.addEventListener("click", () => {
+            // Only allow clicking on completed levels or the next available level
+            if (gameState.completedLevels.includes(level.id) || 
+                level.id === 1 || 
+                gameState.completedLevels.includes(level.id - 1)) {
+              
+              gameState.currentLevel = level.id;
+              gameState.levelCompleted = gameState.completedLevels.includes(level.id);
+              gameState.selectedStars = [];
+              loadLevel(level.id);
+              updateLevelIndicators();
+            } else {
+              showToast("Complete previous levels first!", "error");
+            }
+          });
+          
+          levelIndicators.appendChild(indicator);
+        });
+      }
+
+      // Update level indicators
+      function updateLevelIndicators() {
+        const indicators = levelIndicators.querySelectorAll(".level-indicator");
+        indicators.forEach((indicator) => {
+          const levelId = parseInt(indicator.dataset.level);
+          
+          indicator.classList.remove("active");
+          indicator.classList.remove("completed");
+          
+          if (levelId === gameState.currentLevel) {
+            indicator.classList.add("active");
+          }
+          
+          if (gameState.completedLevels.includes(levelId)) {
+            indicator.classList.add("completed");
+          }
+        });
+      }
+
+      // Load a specific level
+      function loadLevel(levelId) {
+        // Clear previous level content
+        gameField.innerHTML = "";
+        gameField.appendChild(canvas);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Reset next button
+        nextBtn.classList.add("hidden");
+        
+        // Get current level data
+        const currentLevel = levels.find(level => level.id === levelId) || levels[0];
+        
+        // Update level header
+        levelTitle.textContent = `Level ${currentLevel.id}: ${currentLevel.name}`;
+        levelInstruction.textContent = currentLevel.instruction;
+        levelDescription.textContent = currentLevel.description;
+        
+        // Show/hide clues
+        if (currentLevel.clues && currentLevel.clues.length > 0) {
+          cluesContainer.innerHTML = "";
+          currentLevel.clues.forEach(clue => {
+            const clueElement = document.createElement("div");
+            clueElement.className = "clue";
+            clueElement.textContent = clue;
+            cluesContainer.appendChild(clueElement);
+          });
+          cluesContainer.classList.remove("hidden");
+        } else {
+          cluesContainer.classList.add("hidden");
+        }
+        
+        // Create background stars
+        for (let i = 0; i < 200; i++) {
+          const star = document.createElement("div");
+          star.className = "star";
+          star.style.left = Math.random() * 100 + "%";
+          star.style.top = Math.random() * 100 + "%";
+          star.style.width = (Math.random() * 2 + 1) + "px";
+          star.style.height = star.style.width;
+          gameField.appendChild(star);
+        }
+        
+        // Create interactive stars
+        currentLevel.stars.forEach((star) => {
+          const starElement = document.createElement("div");
+          starElement.className = "star-dot";
+          starElement.id = star.id;
+          
+          // Set star size
+          starElement.style.width = star.size + "px";
+          starElement.style.height = star.size + "px";
+          
+          // Position star
+          starElement.style.left = (star.x - star.size / 2) + "px";
+          starElement.style.top = (star.y - star.size / 2) + "px";
+          
+          // Determine star color based on level and star properties
+          let starColor = currentLevel.primaryColor;
+          
+          if (currentLevel.id === 1) {
+            // All stars glow in Level 1
+            starColor = "#ffcc00";
+          } else if (currentLevel.id === 2) {
+            // Orion - constellation stars are blue/red, non-constellation are green
+            starColor = star.isPartOfConstellation ? 
+              (star.size > 25 ? "#ff6b6b" : "#4dabf7") : 
+              "#4aff4a";
+          } else if (currentLevel.id === 3) {
+            // Aries - constellation stars are red, non-constellation are blue
+            starColor = star.isPartOfConstellation ? "#ff6b6b" : "#4dabf7";
+          } else if (currentLevel.id === 4) {
+            // Capricorn - constellation stars brown/grey, non-constellation blue
+            starColor = star.isPartOfConstellation ? 
+              (star.value && star.value % 2 === 0 ? "#8B4513" : "#888888") : 
+              "#4dabf7";
+          } else if (currentLevel.id === 5) {
+            // Leo - constellation stars gold/orange, non-constellation blue
+            starColor = star.isPartOfConstellation ? 
+              (star.value && star.value % 2 === 1 ? "#FFD700" : "#FFA500") : 
+              "#4dabf7";
+          }
+          
+          // Apply star color
+          starElement.style.backgroundColor = starColor;
+          starElement.style.boxShadow = `0 0 ${star.size/2}px ${star.size/5}px ${starColor}40`;
+          
+          // If star has a value, display it
+          if (star.value !== undefined) {
+            starElement.textContent = star.value;
+          }
+          
+          // Add click event handler
+          starElement.addEventListener("click", () => handleStarClick(star.id));
+          
+          // Add star to game field
+          gameField.appendChild(starElement);
+        });
+        
+        // If level is already completed, show lines
+        if (gameState.levelCompleted) {
+          drawSolution(currentLevel.solution);
+        }
+      }
+
+      // Setup event listeners
+      function setupEventListeners() {
+        resetBtn.addEventListener("click", handleResetLevel);
+        checkBtn.addEventListener("click", handleCheckSolution);
+        nextBtn.addEventListener("click", handleNextLevel);
+      }
+
+      // Handle star click
+      function handleStarClick(starId) {
+        if (gameState.levelCompleted) return;
+        
+        if (gameState.selectedStars.includes(starId)) {
+          // If star is already selected, remove it and all stars after it
+          const starIndex = gameState.selectedStars.indexOf(starId);
+          gameState.selectedStars = gameState.selectedStars.slice(0, starIndex);
+        } else {
+          // Otherwise add the star
+          gameState.selectedStars.push(starId);
+        }
+        
+        // Update the visual state
+        updateStarSelection();
+      }
+
+      // Update star selection visual state
+      function updateStarSelection() {
+        const currentLevel = levels.find(level => level.id === gameState.currentLevel);
+        const starElements = document.querySelectorAll(".star-dot");
+        
+        // Reset all stars
+        starElements.forEach(star => {
+          star.style.transform = "scale(1)";
+          
+          // Find matching star in level data
+          const starData = currentLevel.stars.find(s => s.id === star.id);
+          if (starData) {
+            // Determine base color again
+            let starColor = currentLevel.primaryColor;
+            if (currentLevel.id === 1) {
+              starColor = "#ffcc00";
+            } else if (currentLevel.id === 2) {
+              starColor = starData.isPartOfConstellation ? 
+                (starData.size > 25 ? "#ff6b6b" : "#4dabf7") : 
+                "#4aff4a";
+            } else if (currentLevel.id === 3) {
+              starColor = starData.isPartOfConstellation ? "#ff6b6b" : "#4dabf7";
+            } else if (currentLevel.id === 4) {
+              starColor = starData.isPartOfConstellation ? 
+                (starData.value && starData.value % 2 === 0 ? "#8B4513" : "#888888") : 
+                "#4dabf7";
+            } else if (currentLevel.id === 5) {
+              starColor = starData.isPartOfConstellation ? 
+                (starData.value && starData.value % 2 === 1 ? "#FFD700" : "#FFA500") : 
+                "#4dabf7";
+            }
+            
+            star.style.boxShadow = `0 0 ${starData.size/2}px ${starData.size/5}px ${starColor}40`;
+          }
+        });
+        
+        // Highlight selected stars
+        gameState.selectedStars.forEach((selectedStarId, index) => {
+          const selectedStar = document.getElementById(selectedStarId);
+          if (selectedStar) {
+            selectedStar.style.transform = "scale(1.2)";
+            selectedStar.style.boxShadow = `0 0 15px 5px ${currentLevel.primaryColor}`;
+          }
+        });
+        
+        // Clear and redraw lines
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (gameState.selectedStars.length > 1) {
+          drawLines(gameState.selectedStars);
+        }
+      }
+
+      // Draw lines between stars
+      function drawLines(starIds) {
+        ctx.beginPath();
+        
+        for (let i = 0; i < starIds.length; i++) {
+          const starElement = document.getElementById(starIds[i]);
+          
+          if (!starElement) continue;
+          
+          const x = parseInt(starElement.style.left) + parseInt(starElement.style.width) / 2;
+          const y = parseInt(starElement.style.top) + parseInt(starElement.style.height) / 2;
+          
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        
+        const currentLevel = levels.find(level => level.id === gameState.currentLevel);
+        ctx.strokeStyle = currentLevel.primaryColor;
+        ctx.lineWidth = 2;
+        ctx.filter = `drop-shadow(0 0 6px ${currentLevel.primaryColor})`;
+        ctx.stroke();
+      }
+
+      // Draw solution lines
+      function drawSolution(solution) {
+        drawLines(solution);
+        
+        // Highlight solution stars
+        solution.forEach(starId => {
+          const star = document.getElementById(starId);
+          if (star) {
+            const currentLevel = levels.find(level => level.id === gameState.currentLevel);
+            star.style.transform = "scale(1.2)";
+            star.style.boxShadow = `0 0 15px 5px ${currentLevel.primaryColor}`;
+          }
+        });
+      }
+
+      // Handle reset level button click
+      function handleResetLevel() {
+        gameState.selectedStars = [];
+        updateStarSelection();
+      }
+
+      // Handle check solution button click
+      function handleCheckSolution() {
+        const currentLevel = levels.find(level => level.id === gameState.currentLevel);
+        
+        // Check if selected stars match the solution
+        if (arraysEqual(gameState.selectedStars, currentLevel.solution)) {
+          // Level completed
+          gameState.levelCompleted = true;
+          
+          if (!gameState.completedLevels.includes(currentLevel.id)) {
+            gameState.completedLevels.push(currentLevel.id);
+          }
+          
+          updateLevelIndicators();
+          
+          // Show next level button if not the last level
+          if (currentLevel.id < levels.length) {
+            nextBtn.classList.remove("hidden");
+            showToast("Level completed! You can now proceed to the next level.", "success");
+          } else {
+            // Last level completed, show final success message
+            showToast("Congratulations! You've completed all levels!", "success");
+            
+            // Only show the full success message if all levels are completed
+            if (gameState.completedLevels.length === levels.length) {
+              successMessage.classList.remove("hidden");
+              finalPassword.textContent = "All_The_Stars";
+            }
+          }
+        } else {
+          let errorMessage = "Incorrect solution. Try again!";
+          
+          if (gameState.selectedStars.length !== currentLevel.solution.length) {
+            errorMessage = "The number of selected stars doesn't match the required pattern.";
+          }
+          
+          showToast(errorMessage, "error");
+        }
+      }
+
+      // Handle next level button click
+      function handleNextLevel() {
+        if (gameState.currentLevel < levels.length) {
+          gameState.currentLevel++;
+          gameState.selectedStars = [];
+          gameState.levelCompleted = gameState.completedLevels.includes(gameState.currentLevel);
+          loadLevel(gameState.currentLevel);
+          updateLevelIndicators();
+        }
+      }
+
+      // Show toast message
+      function showToast(message, type = "default") {
+        toast.textContent = message;
+        toast.className = "toast show";
+        
+        if (type === "success") {
+          toast.classList.add("success");
+        } else if (type === "error") {
+          toast.classList.add("error");
+        }
+        
+        setTimeout(() => {
+          toast.classList.remove("show");
+        }, 3000);
+      }
+
+      // Helper: Compare arrays
+      function arraysEqual(a, b) {
+        if (a.length !== b.length) return false;
+        return a.every((value, index) => value === b[index]);
+      }
+
+      // Start the game
+      initGame();
+    </script>
+  </body>
+</html>
